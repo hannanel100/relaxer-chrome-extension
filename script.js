@@ -1,15 +1,35 @@
-const container = document.getElementById("container");
-const text = document.getElementById("text");
 const changeButton = document.getElementById("change");
 const outerContainer = document.getElementById("outer-container");
 const totalTime = 7500;
-
+let intervId;
 const breatheTime = (totalTime / 5) * 2;
 const holdTime = totalTime / 5;
-
+const animationArray = [
+  {
+    name: "breathing",
+    html: `<div class="container" id="container">
+<div class="circle"></div>
+<p id="text"></p>
+<div class="pointer-container"><span class="pointer"></span></div>
+<div class="gradient-circle"></div>
+</div>`,
+    backgroundImgUrl: `./img/bg.jpg`,
+    currentAnimation: true,
+    index: 0,
+  },
+  {
+    name: "snow",
+    html: `<canvas></canvas>`,
+    backgroundImageUrl: `./img/snowBg.jpg`,
+    currentAnimation: false,
+    index: 1,
+  },
+];
 breathAnimation();
 
 function breathAnimation() {
+  const container = document.getElementById("container");
+  const text = document.getElementById("text");
   text.innerText = "Breathe In!";
   container.className = "container grow";
   setTimeout(() => {
@@ -20,14 +40,23 @@ function breathAnimation() {
     }, holdTime);
   }, breatheTime);
 }
-
-setInterval(breathAnimation, totalTime);
+const createBreathingHTML = (currentAnimation) => {
+  outerContainer.innerHTML = currentAnimation.html;
+  document.body.style.backgroundImage = `url(${currentAnimation.backgroundImgUrl})`;
+  breathAnimation();
+  intervId = setInterval(breathAnimation, totalTime);
+};
+intervId = setInterval(breathAnimation, totalTime);
 
 const createCanvas = () => {
+  clearInterval(intervId);
   // const canvas = document.createElement("canvas");
   outerContainer.innerHTML = "";
   // container.appendChild(canvas);
-  document.body.style.backgroundImage = "url('img/snowBg.jpg')";
+  const snowObj = animationArray.filter((obj) => obj.name === "snow")[0];
+  console.log(snowObj.backgroundImageUrl);
+  document.body.style.backgroundImage = `url(${snowObj.backgroundImageUrl})`;
+  outerContainer.innerHTML = `<div class="snow-text">Chill Out...</div>`;
   createSnow();
 };
 
@@ -139,4 +168,39 @@ const createSnow = () => {
   new Snow();
 };
 
-changeButton.addEventListener("click", createCanvas);
+const checkCurrentAnimation = () => {
+  const currentAnimationObj = animationArray.filter(
+    (obj) => obj.currentAnimation === true
+  )[0];
+  return currentAnimationObj;
+};
+
+const updateCurrentAnimation = (currentAnimationObj) => {
+  const currentAnimationIndex = currentAnimationObj.index;
+  animationArray[currentAnimationIndex].currentAnimation = false;
+  if (currentAnimationIndex < animationArray.length - 1) {
+    animationArray[currentAnimationIndex + 1].currentAnimation = true;
+  } else {
+    animationArray[0].currentAnimation = true;
+  }
+};
+
+const cycleAnimations = () => {
+  const currentAnimation = checkCurrentAnimation();
+  updateCurrentAnimation(currentAnimation);
+  const updatedCurrentAnimation = checkCurrentAnimation();
+  animationArray.forEach((animationObj) => {
+    switch (animationObj.name) {
+      case "breathing":
+        if (animationObj.currentAnimation === true)
+          createBreathingHTML(updatedCurrentAnimation);
+        break;
+      case "snow":
+        if (animationObj.currentAnimation === true) createCanvas();
+        break;
+      default:
+        break;
+    }
+  });
+};
+changeButton.addEventListener("click", cycleAnimations);
